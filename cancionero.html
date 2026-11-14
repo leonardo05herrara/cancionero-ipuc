@@ -30,8 +30,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .header-logo-text .hl-sub{font-size:9px;font-weight:600;color:#a8c4f0;letter-spacing:.06em;text-transform:uppercase}
 .header-title{font-size:16px;font-weight:700;color:var(--text);flex:1}
 .header-btn{background:none;border:none;color:var(--gold);font-size:13px;cursor:pointer;padding:6px 4px;font-weight:600}
-.back-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:rgba(255,209,0,.08);border:1.5px solid rgba(255,209,0,.3);border-radius:50%;cursor:pointer;color:var(--gold);flex-shrink:0;transition:all .15s}
-.back-btn:active{background:rgba(255,209,0,.2);border-color:var(--gold)}
+.back-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:rgba(255,209,0,.18);border:2px solid rgba(255,209,0,.7);border-radius:50%;cursor:pointer;color:var(--gold);flex-shrink:0;transition:all .15s;font-size:20px;font-weight:700;line-height:1}
+.back-btn:active{background:rgba(255,209,0,.35);border-color:var(--gold)}
 
 /* HOME */
 .search-wrap{padding:12px 16px 0}
@@ -77,12 +77,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .line-gap{height:10px;width:100%}
 
 /* TRANSPOSE PANEL */
-.trans-panel{background:var(--bg2);padding:10px 12px 16px;border-top:1px solid var(--border);position:sticky;bottom:0}
-.trans-title{font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.06em;margin-bottom:7px}
-.notes-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px}
-.note-pill{background:var(--bg);border:1.5px solid var(--border);border-radius:7px;padding:5px 6px;font-size:11px;color:var(--text2);cursor:pointer;text-align:center;min-width:38px;font-weight:700;line-height:1.2;transition:all .15s}
-.note-pill small{display:block;font-size:9px;font-weight:400;font-family:'Courier New',monospace;opacity:.7}
-.note-pill.active{background:var(--gold);border-color:var(--gold);color:#0a1628}
+.trans-panel{background:var(--bg2);padding:5px 10px 8px;border-top:1px solid var(--border);position:sticky;bottom:0}
+.trans-title{font-size:9px;color:var(--text3);font-weight:600;letter-spacing:.06em;margin-bottom:3px}
+.notes-row{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:3px}
+.note-pill{background:var(--bg);border:1.5px solid var(--border);border-radius:6px;padding:4px 5px;font-size:12px;color:var(--text2);cursor:pointer;text-align:center;min-width:34px;font-weight:700;line-height:1.1;transition:all .15s}
+.note-pill.active{background:var(--gold);border-color:var(--gold);color:#0a1628;box-shadow:0 0 0 2px rgba(255,209,0,.4);font-size:13px}
 
 /* SET LIST VIEW */
 .setlist-wrap{padding:16px 16px 100px}
@@ -457,7 +456,7 @@ function getAllSongs() {
 }
 function getSetList() { return JSON.parse(localStorage.getItem('c_setlist') || '[]'); }
 function saveSetList(arr) { localStorage.setItem('c_setlist', JSON.stringify(arr)); }
-function addToSetList(id) { const sl = getSetList(); if (!sl.includes(id)) { sl.push(id); saveSetList(sl); } }
+function addToSetList(id) { const sl = getSetList(); if (!sl.some(x => String(x) === String(id))) { sl.push(id); saveSetList(sl); } }
 function removeFromSetList(id) { saveSetList(getSetList().filter(x => x !== id)); }
 function isInSetList(id) { return getSetList().includes(id); }
 function addUserSong(song) {
@@ -470,8 +469,10 @@ function addUserSong(song) {
 }
 
 // ─── DOM HELPER ────────────────────────────────────────────────
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const SVG_TAGS = new Set(['svg','path','polyline','line','rect','circle','g','use','defs','symbol']);
 function el(tag, attrs) {
-  const e = document.createElement(tag);
+  const e = SVG_TAGS.has(tag) ? document.createElementNS(SVG_NS, tag) : document.createElement(tag);
   if (attrs) Object.entries(attrs).forEach(([k, v]) => {
     if (v == null) return;
     if (k === 'class') e.className = v;
@@ -634,8 +635,7 @@ function renderSong() {
         state.semi = diff <= 6 ? diff : diff - 12;
         renderSong();
       }});
-      pill.textContent = ESP[displayNote] || displayNote;
-      pill.appendChild(el('small', null, displayNote));
+      pill.textContent = (isActive ? '✓ ' : '') + (ESP[displayNote] || displayNote);
       row.appendChild(pill);
     });
     return row;
@@ -651,7 +651,8 @@ function renderSetList() {
   app.innerHTML = '';
   const setList = getSetList();
   const songs = getAllSongs();
-  const items = setList.map(id => songs.find(s => s.id === id)).filter(Boolean);
+  const _seen = new Set();
+  const items = setList.map(id => songs.find(s => String(s.id) === String(id))).filter(s => { if (!s || _seen.has(s.id)) return false; _seen.add(s.id); return true; });
 
   app.appendChild(el('div', { class: 'header' },
     el('button', { class: 'back-btn', onclick: () => navigate('home') }, el('svg', {width:'20',height:'20',viewBox:'0 0 24 24',fill:'none',stroke:'currentColor','stroke-width':'2.5','stroke-linecap':'round','stroke-linejoin':'round'}, el('polyline', {points:'15 18 9 12 15 6'}))),
